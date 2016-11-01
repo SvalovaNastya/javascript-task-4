@@ -115,7 +115,7 @@ exports.sortBy = function () {
 
     return { name: 'sortBy', function: function (collection) {
         collection.sort(function (a, b) {
-            var sign = Math.sign(a[property] - b[property]);
+            var sign = a[property] > b[property] ? 1 : -1;
 
             return order === 'asc' ? sign : -sign;
         });
