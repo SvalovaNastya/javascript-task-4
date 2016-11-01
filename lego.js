@@ -4,7 +4,7 @@
  * Сделано задание на звездочку
  * Реализованы методы or и and
  */
-exports.isStar = true;
+exports.isStar = false;
 
 var FUNCTIONS_PRIORITY = { 'select': 1, 'format': 1, 'limit': 1,
     'or': 0, 'and': 0, 'filterIn': 0, 'sortBy': 0 };
@@ -36,14 +36,13 @@ function sortFunctions(functions) {
 }
 
 function unionArrays(arr1, arr2) {
-    var newArray = copyObjectsArray(arr1);
     arr2.forEach(function (item) {
-        if (newArray.indexOf(item) < 0) {
-            newArray.push(item);
+        if (arr2.indexOf(item) < 0) {
+            arr1.push(item);
         }
     });
 
-    return newArray;
+    return arr1;
 }
 
 /**
@@ -66,7 +65,7 @@ exports.query = function (collection) {
 /**
  * Выбор полей
  * @params {...String}
- * @returns {Function}
+ * @returns {{name: string, function: Function}}
  */
 exports.select = function () {
     var fields = [].slice.call(arguments);
@@ -85,7 +84,7 @@ exports.select = function () {
  * Фильтрация поля по массиву значений
  * @param {String} property – Свойство для фильтрации
  * @param {Array} values – Доступные значения
- * @returns {Function}
+ * @returns {{name: string, function: Function}}
  */
 exports.filterIn = function () {
     var string = arguments[0];
@@ -107,7 +106,7 @@ exports.filterIn = function () {
  * Сортировка коллекции по полю
  * @param {String} property – Свойство для фильтрации
  * @param {String} order – Порядок сортировки (asc - по возрастанию; desc – по убыванию)
- * @returns {Function}
+ * @returns {{name: string, function: Function}}
  */
 exports.sortBy = function () {
     var property = arguments[0];
@@ -128,7 +127,7 @@ exports.sortBy = function () {
  * Форматирование поля
  * @param {String} property – Свойство для фильтрации
  * @param {Function} formatter – Функция для форматирования
- * @returns {Function}
+ * @returns {{name: string, function: Function}}
  */
 exports.format = function () {
     var property = arguments[0];
@@ -146,7 +145,7 @@ exports.format = function () {
 /**
  * Ограничение количества элементов в коллекции
  * @param {Number} count – Максимальное количество элементов
- * @returns {Function}
+ * @returns {{name: string, function: Function}}
  */
 exports.limit = function () {
     var count = arguments[0];
@@ -162,18 +161,16 @@ if (exports.isStar) {
      * Фильтрация, объединяющая фильтрующие функции
      * @star
      * @params {...Function} – Фильтрующие функции
-     * @returns {Function}
+     * @returns {{name: string, function: Function}}
      */
     exports.or = function () {
         var functions = [].slice.call(arguments);
 
         return { name: 'or', function: function (collection) {
-            var newCollection = functions.reduce(function (acc, item) {
+            return functions.reduce(function (acc, item) {
                 return unionArrays(acc, item.function(collection));
             },
             []);
-
-            return newCollection;
         } };
     };
 
@@ -181,7 +178,7 @@ if (exports.isStar) {
      * Фильтрация, пересекающая фильтрующие функции
      * @star
      * @params {...Function} – Фильтрующие функции
-     * @returns {Function}
+     * @returns {{name: string, function: Function}}
      */
     exports.and = function () {
         var functions = [].slice.call(arguments);
