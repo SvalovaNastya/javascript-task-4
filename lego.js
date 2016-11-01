@@ -4,7 +4,7 @@
  * Сделано задание на звездочку
  * Реализованы методы or и and
  */
-exports.isStar = false;
+exports.isStar = true;
 
 var FUNCTIONS_PRIORITY = { 'select': 1, 'format': 1, 'limit': 1,
     'or': 0, 'and': 0, 'filterIn': 0, 'sortBy': 0 };
@@ -37,7 +37,7 @@ function sortFunctions(functions) {
 
 function unionArrays(arr1, arr2) {
     arr2.forEach(function (item) {
-        if (arr2.indexOf(item) < 0) {
+        if (arr1.indexOf(item) < 0) {
             arr1.push(item);
         }
     });
@@ -184,12 +184,11 @@ if (exports.isStar) {
         var functions = [].slice.call(arguments);
 
         return { name: 'or', function: function (collection) {
-            var newCollection = copyObjectsArray(collection);
             functions.forEach(function (item) {
-                newCollection = item.function(newCollection);
+                collection = item.function(collection);
             });
 
-            return newCollection;
+            return collection;
         } };
     };
 }
