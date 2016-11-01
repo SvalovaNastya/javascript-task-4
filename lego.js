@@ -6,6 +6,46 @@
  */
 exports.isStar = true;
 
+var FUNCTIONS_PRIORITY = { 'select': 1, 'format': 1, 'limit': 1,
+    'or': 0, 'and': 0, 'filterIn': 0, 'sortBy': 0 };
+
+function copyObjectFields(object, fields) {
+    if (!fields) {
+        fields = Object.keys(object);
+    }
+    var newObject = {};
+    fields.forEach(function (item) {
+        if (object.hasOwnProperty(item)) {
+            newObject[item] = object[item];
+        }
+    });
+
+    return newObject;
+}
+
+function copyObjectsArray(array) {
+    return array.map(function (item) {
+        return copyObjectFields(item);
+    });
+}
+
+function sortFunctions(functions) {
+    return functions.sort(function (a, b) {
+        return Math.sign(FUNCTIONS_PRIORITY[a.name] - FUNCTIONS_PRIORITY[b.name]);
+    });
+}
+
+function unionArrays(arr1, arr2) {
+    var newArray = copyObjectsArray(arr1);
+    arr2.forEach(function (item) {
+        if (newArray.indexOf(item) < 0) {
+            newArray.push(item);
+        }
+    });
+
+    return newArray;
+}
+
 /**
  * Запрос к коллекции
  * @param {Array} collection
@@ -13,58 +53,107 @@ exports.isStar = true;
  * @returns {Array}
  */
 exports.query = function (collection) {
-    return collection;
+    var newCollection = copyObjectsArray(collection);
+    var functions = [].slice.call(arguments, 1);
+    functions = sortFunctions(functions);
+    functions.forEach(function (item) {
+        newCollection = item.function(newCollection);
+    });
+
+    return newCollection;
 };
 
 /**
  * Выбор полей
  * @params {...String}
+ * @returns {Function}
  */
 exports.select = function () {
-    return;
+    var fields = [].slice.call(arguments);
+
+    return { name: 'select', function: function (collection) {
+        var newCollection = [];
+        collection.forEach(function (item) {
+            newCollection.push(copyObjectFields(item, fields));
+        });
+
+        return newCollection;
+    } };
 };
 
 /**
  * Фильтрация поля по массиву значений
  * @param {String} property – Свойство для фильтрации
  * @param {Array} values – Доступные значения
+ * @returns {Function}
  */
-exports.filterIn = function (property, values) {
-    console.info(property, values);
+exports.filterIn = function () {
+    var string = arguments[0];
+    var array = arguments[1];
 
-    return;
+    return { name: 'filterIn', function: function (collection) {
+        var newCollection = [];
+        collection.forEach(function (item) {
+            if (array.indexOf(item[string]) >= 0) {
+                newCollection.push(item);
+            }
+        });
+
+        return newCollection;
+    } };
 };
 
 /**
  * Сортировка коллекции по полю
  * @param {String} property – Свойство для фильтрации
  * @param {String} order – Порядок сортировки (asc - по возрастанию; desc – по убыванию)
+ * @returns {Function}
  */
-exports.sortBy = function (property, order) {
-    console.info(property, order);
+exports.sortBy = function () {
+    var property = arguments[0];
+    var order = arguments[1];
 
-    return;
+    return { name: 'sortBy', function: function (collection) {
+        collection.sort(function (a, b) {
+            var sign = Math.sign(a[property] - b[property]);
+
+            return order === 'asc' ? sign : -sign;
+        });
+
+        return collection;
+    } };
 };
 
 /**
  * Форматирование поля
  * @param {String} property – Свойство для фильтрации
  * @param {Function} formatter – Функция для форматирования
+ * @returns {Function}
  */
-exports.format = function (property, formatter) {
-    console.info(property, formatter);
+exports.format = function () {
+    var property = arguments[0];
+    var func = arguments[1];
 
-    return;
+    return { name: 'format', function: function (collection) {
+        collection.forEach(function (item) {
+            item[property] = func(item[property]);
+        });
+
+        return collection;
+    } };
 };
 
 /**
  * Ограничение количества элементов в коллекции
  * @param {Number} count – Максимальное количество элементов
+ * @returns {Function}
  */
-exports.limit = function (count) {
-    console.info(count);
+exports.limit = function () {
+    var count = arguments[0];
 
-    return;
+    return { name: 'limit', function: function (collection) {
+        return collection.slice(0, count);
+    } };
 };
 
 if (exports.isStar) {
@@ -73,17 +162,37 @@ if (exports.isStar) {
      * Фильтрация, объединяющая фильтрующие функции
      * @star
      * @params {...Function} – Фильтрующие функции
+     * @returns {Function}
      */
     exports.or = function () {
-        return;
+        var functions = [].slice.call(arguments);
+
+        return { name: 'or', function: function (collection) {
+            var newCollection = functions.reduce(function (acc, item) {
+                return unionArrays(acc, item.function(collection));
+            },
+            []);
+
+            return newCollection;
+        } };
     };
 
     /**
      * Фильтрация, пересекающая фильтрующие функции
      * @star
      * @params {...Function} – Фильтрующие функции
+     * @returns {Function}
      */
     exports.and = function () {
-        return;
+        var functions = [].slice.call(arguments);
+
+        return { name: 'or', function: function (collection) {
+            var newCollection = copyObjectsArray(collection);
+            functions.forEach(function (item) {
+                newCollection = item.function(newCollection);
+            });
+
+            return newCollection;
+        } };
     };
 }
