@@ -37,7 +37,7 @@ function sortFunctions(functions) {
 
 function unionArrays(arr1, arr2) {
     arr2.forEach(function (item) {
-        if (arr1.indexOf(item) < 0) {
+        if (arr1.indexOf(item) === -1) {
             arr1.push(item);
         }
     });
@@ -87,13 +87,13 @@ exports.select = function () {
  * @returns {{name: string, function: Function}}
  */
 exports.filterIn = function () {
-    var string = arguments[0];
-    var array = arguments[1];
+    var property = arguments[0];
+    var values = arguments[1];
 
     return { name: 'filterIn', function: function (collection) {
         var newCollection = [];
         collection.forEach(function (item) {
-            if (array.indexOf(item[string]) >= 0) {
+            if (values.indexOf(item[property]) !== -1) {
                 newCollection.push(item);
             }
         });
@@ -183,7 +183,7 @@ if (exports.isStar) {
     exports.and = function () {
         var functions = [].slice.call(arguments);
 
-        return { name: 'or', function: function (collection) {
+        return { name: 'and', function: function (collection) {
             functions.forEach(function (item) {
                 collection = item.function(collection);
             });
