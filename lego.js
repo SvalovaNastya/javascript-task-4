@@ -158,12 +158,9 @@ if (exports.isStar) {
 
         return { name: 'or', function: function (collection) {
             return collection.filter(function (item) {
-                var isAnyFunctionContains = false;
-                functions.forEach(function (func) {
-                    if (func.function(collection).indexOf(item) !== -1)
-                        isAnyFunctionContains = true;
+                return functions.some(function (func) {
+                    return func.function(collection).indexOf(item) !== -1;
                 });
-                return isAnyFunctionContains;
             });
         } };
     };
