@@ -158,9 +158,14 @@ if (exports.isStar) {
 
         return { name: 'or', function: function (collection) {
             return collection.filter(function (item) {
-                return functions.some(function (func) {
-                    return func.function(collection).indexOf(item) !== -1;
+                var isAnyFunctionContains = false;
+                functions.forEach(function (func) {
+                    if (func.function(collection).indexOf(item) !== -1) {
+                        isAnyFunctionContains = true;
+                    }
                 });
+                
+                return isAnyFunctionContains;
             });
         } };
     };
