@@ -162,7 +162,7 @@ if (exports.isStar) {
                     return func.function(collection).indexOf(item) !== -1;
                 });
             });
-         } };
+        } };
     };
 
     /**
