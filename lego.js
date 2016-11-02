@@ -35,16 +35,6 @@ function sortFunctions(functions) {
     });
 }
 
-function unionArrays(arr1, arr2) {
-    arr2.forEach(function (item) {
-        if (arr1.indexOf(item) === -1) {
-            arr1.push(item);
-        }
-    });
-
-    return arr1;
-}
-
 /**
  * Запрос к коллекции
  * @param {Array} collection
@@ -167,10 +157,14 @@ if (exports.isStar) {
         var functions = [].slice.call(arguments);
 
         return { name: 'or', function: function (collection) {
-            return functions.reduce(function (acc, item) {
-                return unionArrays(acc, item.function(collection));
-            },
-            []);
+            return collection.filter(function (item) {
+                var isAnyFunctionContains = false;
+                functions.forEach(function (func) {
+                    if (func.function(collection).indexOf(item) !== -1)
+                        isAnyFunctionContains = true;
+                });
+                return isAnyFunctionContains;
+            });
         } };
     };
 
