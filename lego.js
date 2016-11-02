@@ -164,7 +164,7 @@ if (exports.isStar) {
                         isAnyFunctionContains = true;
                     }
                 });
-                
+
                 return isAnyFunctionContains;
             });
         } };
